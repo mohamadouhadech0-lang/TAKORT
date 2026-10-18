@@ -23,10 +23,182 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .t{display:flex;align-items:center;gap:10px;font-size:15px;line-height:1.3}
 .t.away{flex-direction:row-reverse}
 .crest{flex:none;width:36px;height:36px;border-radius:50%;object-fit:contain;background:var(--pill)}
-.mid{min-width:92px;display:flex;justify-content:center}
+.mid{min-width:92px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .time,.score{background:var(--pill);padding:8px 14px;border-radius:12px;font-weight:700;font-size:17px;direction:ltr;white-space:nowrap}
 .score i{color:var(--mut);font-style:normal;margin:0 6px}
 .score.live{color:var(--acc)}
 .min{display:block;text-align:center;font-size:12px;color:var(--acc);margin-top:2px}
 .empty{text-align:center;color:var(--mut);padding:40px 16px}
+.ad-container{text-align:center;margin:10px auto;display:flex;justify-content:center}
 </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">المباريات</div>
+  <div class="nav">
+    <button class="ib" onclick="fetchMatches()">🔄</button>
+  </div>
+</header>
+
+<div class="date" id="currentDate">--</div>
+
+<div class="chips">
+  <button class="chip" aria-pressed="true" onclick="filterMatches('all', this)">الكل</button>
+  <button class="chip" aria-pressed="false" onclick="filterMatches('live', this)">مباشر</button>
+  <button class="chip" aria-pressed="false" onclick="filterMatches('finished', this)">انتهت</button>
+  <button class="chip" aria-pressed="false" onclick="filterMatches('notstarted', this)">لم تبدأ</button>
+</div>
+
+<!-- الإعلان الجانبي -->
+<div class="ad-container">
+  <script>
+    atOptions = {
+      'key' : 'ea661d3865d68b7895e1f66b35f35dda',
+      'format' : 'iframe',
+      'height' : 300,
+      'width' : 160,
+      'params' : {}
+    };
+  </script>
+  <script src="https://czernik.org/22/ea661d3865d68b7895e1f66b35f35dda"></script>
+</div>
+
+<main id="app">
+  <div class="empty">جاري تحميل المباريات...</div>
+</main>
+
+<script>
+  const API_TOKEN = 'MyUlh-nVrhXv1D0k';
+  const BASE_URL = 'https://api.soccersapi.com/v2.2';
+  let allMatchesData = [];
+  let currentFilter = 'all';
+
+  // ضبط تاريخ اليوم
+  const now = new Date();
+  document.getElementById('currentDate').innerText = now.toLocaleDateString('ar-MA', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+
+  async function fetchMatches() {
+    const appContainer = document.getElementById('app');
+    appContainer.innerHTML = '<div class="empty">جاري تحديث البيانات...</div>';
+
+    try {
+      const response = await fetch(`${BASE_URL}/livescores/?t=list`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${API_TOKEN}`,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`خطأ في السيرفر: ${response.status}`);
+      }
+
+      const result = await response.json();
+      allMatchesData = result.data || [];
+
+      renderMatches();
+    } catch (error) {
+      console.error(error);
+      appContainer.innerHTML = `<div class="empty">تعذّر جلب البيانات. الرجاء التأكد من الاتصال أو حالة المفتاح.<br><small>${error.message}</small></div>`;
+    }
+  }
+
+  function renderMatches() {
+    const appContainer = document.getElementById('app');
+    
+    // تصفية المباريات بحسب الزر المختار
+    const filtered = allMatchesData.filter(match => {
+      const status = (match.status_name || '').toLowerCase();
+      if (currentFilter === 'live') {
+        return status.includes('inplay') || status.includes('live') || match.minute > 0;
+      }
+      if (currentFilter === 'finished') {
+        return status.includes('ft') || status.includes('finished') || status.includes('ended');
+      }
+      if (currentFilter === 'notstarted') {
+        return status.includes('ns') || status.includes('not started');
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      appContainer.innerHTML = '<div class="empty">لا توجد مباريات مطابقة للفلتر المحدد.</div>';
+      return;
+    }
+
+    // تجميع المباريات حسب اسم الدوري
+    const leaguesMap = {};
+    filtered.forEach(match => {
+      const leagueName = match.league?.name || 'بطولات أخرى';
+      if (!leaguesMap[leagueName]) {
+        leaguesMap[leagueName] = [];
+      }
+      leaguesMap[leagueName].push(match);
+    });
+
+    let html = '';
+    for (const [leagueName, matches] of Object.entries(leaguesMap)) {
+      html += `<div class="league">${leagueName}</div>`;
+      
+      matches.forEach(m => {
+        const homeName = m.teams?.home?.name || 'الفريق المحلي';
+        const homeLogo = m.teams?.home?.img || '';
+        const awayName = m.teams?.away?.name || 'الفريق الضيف';
+        const awayLogo = m.teams?.away?.img || '';
+
+        const homeScore = m.scores?.home_score ?? '-';
+        const awayScore = m.scores?.away_score ?? '-';
+        const status = m.status_name || '';
+        const matchTime = m.time?.time || '';
+        const isLive = m.minute > 0 || status.toLowerCase().includes('live');
+
+        html += `
+          <div class="m">
+            <div class="t">
+              <img class="crest" src="${homeLogo}" alt="${homeName}" onerror="this.style.display='none'">
+              <span>${homeName}</span>
+            </div>
+            
+            <div class="mid">
+              ${homeScore !== '-' ? `
+                <div class="score ${isLive ? 'live' : ''}">
+                  ${homeScore} <i>-</i>${awayScore}
+                </div>
+                ${m.minute ? `<span class="min">${m.minute}'</span>` : `<span class="min">${status}</span>`}
+              ` : `
+                <div class="time">${matchTime || 'لم تبدأ'}</div>
+              `}
+            </div>
+
+            <div class="t away">
+              <img class="crest" src="${awayLogo}" alt="${awayName}" onerror="this.style.display='none'">
+              <span>${awayName}</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    appContainer.innerHTML = html;
+  }
+
+  function filterMatches(type, btnElement) {
+    currentFilter = type;
+    document.querySelectorAll('.chip').forEach(btn => btn.setAttribute('aria-pressed', 'false'));
+    btnElement.setAttribute('aria-pressed', 'true');
+    renderMatches();
+  }
+
+  // التحديث التلقائي كل دقيقة
+  fetchMatches();
+  setInterval(fetchMatches, 60000);
+</script>
+
+</body>
+</html>
