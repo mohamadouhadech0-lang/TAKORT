@@ -48,13 +48,33 @@
             text-align: center;
         }
 
+        /* تنسيق الزر */
+        .show-btn {
+            background-color: #38bdf8;
+            color: #0f172a;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 15px 0;
+        }
+
+        .show-btn:hover {
+            background-color: #0284c7;
+            color: #ffffff;
+        }
+
+        /* حاوية الإعلان المخفية افتراضياً */
         .ad-container {
+            display: none; /* إخفاء الإعلان */
             margin: 25px 0;
             padding: 15px;
             background-color: #0f172a;
             border: 1px dashed #38bdf8;
             border-radius: 8px;
-            display: inline-block;
         }
 
         .ad-title {
@@ -80,10 +100,13 @@
 
     <div class="container">
         <h2>أهلاً بك في منصة تاكورت</h2>
-        <p style="margin-top: 10px; color: #cbd5e1;">تابع المباريات والنتائج المباشرة أولاً بأول.</p>
+        <p style="margin-top: 10px; color: #cbd5e1;">اضغط على الزر أدناه لعرض المحتوى والنتائج المباشرة.</p>
 
-        <!-- بداية مساحة الإعلان -->
-        <div class="ad-container">
+        <!-- زر إظهار الإعلان -->
+        <button class="show-btn" onclick="toggleAd()">عرض المحتوى / الإعلان</button>
+
+        <!-- مساحة الإعلان المخفية -->
+        <div id="adBox" class="ad-container">
             <div class="ad-title">إعلان</div>
             <script>
               atOptions = {
@@ -96,13 +119,24 @@
             </script>
             <script src="https://czernik.org/22/ea661d3865d68b7895e1f66b35f35dda"></script>
         </div>
-        <!-- نهاية مساحة الإعلان -->
 
     </div>
 
     <footer>
         &copy; 2026 TAKORT. جميع الحقوق محفوظة.
     </footer>
+
+    <!-- سكربت التحكم بالظهور والإخفاء -->
+    <script>
+        function toggleAd() {
+            var adBox = document.getElementById("adBox");
+            if (adBox.style.display === "none" || adBox.style.display === "") {
+                adBox.style.display = "inline-block";
+            } else {
+                adBox.style.display = "none";
+            }
+        }
+    </script>
 
 </body>
 </html>
