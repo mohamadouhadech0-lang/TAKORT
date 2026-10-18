@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TAKORT - تاكورت لكرة القدم</title>
+    
+    <!-- كود الإعلان الجديد (popunder / social bar) -->
+    <script data-cfasync="false" src="https://czernik.org/14/a1465396de94e8476cb2e1126002fb1d"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -67,14 +71,18 @@
             color: #ffffff;
         }
 
-        /* حاوية الإعلان المخفية افتراضياً */
+        /* حاوية الإعلانات */
         .ad-container {
-            display: none; /* إخفاء الإعلان */
             margin: 25px 0;
             padding: 15px;
             background-color: #0f172a;
             border: 1px dashed #38bdf8;
             border-radius: 8px;
+        }
+
+        /* الإعلان الأول سيكون مخفياً تحت الزر */
+        #adBox1 {
+            display: none;
         }
 
         .ad-title {
@@ -102,41 +110,4 @@
         <h2>أهلاً بك في منصة تاكورت</h2>
         <p style="margin-top: 10px; color: #cbd5e1;">اضغط على الزر أدناه لعرض المحتوى والنتائج المباشرة.</p>
 
-        <!-- زر إظهار الإعلان -->
-        <button class="show-btn" onclick="toggleAd()">عرض المحتوى / الإعلان</button>
-
-        <!-- مساحة الإعلان المخفية -->
-        <div id="adBox" class="ad-container">
-            <div class="ad-title">إعلان</div>
-            <script>
-              atOptions = {
-                'key' : 'ea661d3865d68b7895e1f66b35f35dda',
-                'format' : 'iframe',
-                'height' : 300,
-                'width' : 160,
-                'params' : {}
-              };
-            </script>
-            <script src="https://czernik.org/22/ea661d3865d68b7895e1f66b35f35dda"></script>
-        </div>
-
-    </div>
-
-    <footer>
-        &copy; 2026 TAKORT. جميع الحقوق محفوظة.
-    </footer>
-
-    <!-- سكربت التحكم بالظهور والإخفاء -->
-    <script>
-        function toggleAd() {
-            var adBox = document.getElementById("adBox");
-            if (adBox.style.display === "none" || adBox.style.display === "") {
-                adBox.style.display = "inline-block";
-            } else {
-                adBox.style.display = "none";
-            }
-        }
-    </script>
-
-</body>
-</html>
+        <!-- زر إظ
