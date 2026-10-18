@@ -1,95 +1,64 @@
-// متغير لتخزين رابط البث للمباراة الأولى
-const FIRST_MATCH_STREAM = "https://912acsss8af382.yasirtv.com/playerv5.php?match=4750824&key=9f39972b67d6ce22189507d008acwc26";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>جدول المباريات والبث المباشر</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0f172a; color: #fff; margin: 0; padding: 15px; text-align: center; }
+    #player-wrapper { margin: 15px auto; max-width: 800px; width: 100%; position: relative; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+    .card { background: #1e293b; border-radius: 10px; padding: 15px; margin: 10px auto; max-width: 500px; }
+    .cta { background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+    .cta:hover { background: #dc2626; }
+    #toast { visibility: hidden; background-color: #333; color: #fff; text-align: center; border-radius: 5px; padding: 10px; position: fixed; z-index: 100; bottom: 30px; left: 50%; transform: translateX(-50%); }
+    #toast.show { visibility: visible; }
+  </style>
+</head>
+<body>
 
-function team(k){
-  const t=TEAMS[k];
-  return `<div class="team"><div class="logo" style="background:${t[2]}">${t[1]}</div>${t[0]}</div>`;
-}
+  <h2>جدول المباريات والبث المباشر</h2>
+  <div id="player-wrapper"></div>
+  <div id="list"></div>
+  <div id="toast"></div>
 
-function renderTabs(){
-  $("tabs").innerHTML=["yest","today","tom"].map(k=>`<button class="tab ${k===day?"on":""}" data-k="${k}">${NAMES[k][0]}<small>${fmtDate(NAMES[k][1])}</small></button>`).join("");
-  document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{day=b.dataset.k;selected=0;render()});
-}
+  <script>
+    // ضع رابط الـ iframe الخاص بك هنا (تأكد من أن الرابط يعمل ولا ينتهي بصلاحية سريعة)
+    const FIRST_MATCH_STREAM = "https://912acsss8af382.yasirtv.com/playerv5.php?match=4750824&key=9f39972b67d6ce22189507d008acwc26";
 
-function mid(m){
-  if(m.st==="live"){
-    const mm=m.min+Math.floor(sec/60),ss=sec%60;
-    return `<div class="score">${m.s}</div><div class="live-badge"><span class="dot"></span>مباشر</div><div class="clock">${String(mm).padStart(2,"0")}:${String(ss).padStart(2,"0")}</div>`;
-  }
-  if(m.st==="soon") return `<div class="score">${m.s}</div><div class="status">${fmtTime(...m.at)}</div>`;
-  return `<div class="score">${m.s}</div><div class="status">${m.st}</div>`;
-}
-
-// دالة لفتح البث المباشر
-function openStream(streamUrl) {
-  let playerContainer = document.getElementById("player-wrapper");
-  if (!playerContainer) {
-    playerContainer = document.createElement("div");
-    playerContainer.id = "player-wrapper";
-    playerContainer.style.cssText = "margin: 15px auto; max-width: 800px; width: 100%; position: relative; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);";
-    const mainContainer = document.querySelector("main") || document.body;
-    mainContainer.insertBefore(playerContainer, mainContainer.firstChild);
-  }
-
-  playerContainer.innerHTML = `
-    <div style="position: relative; padding-top: 56.25%;">
-      <button onclick="closeStream()" style="position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.7); color: #fff; border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 12px;">✕ إغلاق البث</button>
-      <iframe src="${streamUrl}" style="position: absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen scrolling="no"></iframe>
-    </div>
-  `;
-  playerContainer.scrollIntoView({ behavior: 'smooth' });
-}
-
-// دالة لإغلاق البث
-function closeStream() {
-  const playerContainer = document.getElementById("player-wrapper");
-  if (playerContainer) playerContainer.remove();
-}
-
-function render(){
-  renderTabs();
-  const list=DAYS[day];
-  $("list").innerHTML=list.length?list.map((m,i)=>`
-   <article class="card ${m.st==="live"?"live":""}">
-     <div class="main">${team(m.h)}<div class="mid" data-i="${i}">${mid(m)}</div>${team(m.a)}</div>
-     ${m.st==="live"?`<button class="cta" data-i="${i}"><svg width="20" height="20" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>شاهد المباراة الآن</button>`:""}
-     <div class="foot"><span>${trophy}${m.lg}</span><span>${tv}${m.ch}</span></div>
-   </article>`).join(""):'<div class="empty">لا توجد مباريات في هذا اليوم</div>';
-
-  document.querySelectorAll(".cta").forEach(b=>b.onclick=(e)=>{
-    const index = e.currentTarget.dataset.i;
-    // إذا كانت المباراة الأولى (index == 0) سيفتح كود الـ iframe المباشر الخاص بك
-    if(index == 0) {
-      toast("جارٍ تشغيل البث المباشر…");
-      openStream(FIRST_MATCH_STREAM);
-    } else {
-      toast("جارٍ فتح البث المباشر…");
+    function openStream(streamUrl) {
+      const playerContainer = document.getElementById("player-wrapper");
+      playerContainer.innerHTML = `
+        <div style="position: relative; padding-top: 56.25%;">
+          <button onclick="closeStream()" style="position: absolute; top: 10px; left: 10px; z-index: 10; background: rgba(0,0,0,0.8); color: #fff; border: none; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-weight: bold;">✕ إغلاق البث</button>
+          <iframe src="${streamUrl}" style="position: absolute; top:0; left:0; width:100%; height:100%; border:0;" allowfullscreen scrolling="no"></iframe>
+        </div>
+      `;
+      playerContainer.scrollIntoView({ behavior: 'smooth' });
     }
-  });
-}
 
-function tick(){
-  sec++;
-  document.querySelectorAll(".mid").forEach(el=>{
-    const m=DAYS[day][el.dataset.i];
-    if(m.st==="live") el.innerHTML=mid(m);
-  });
-}
+    function closeStream() {
+      document.getElementById("player-wrapper").innerHTML = "";
+    }
 
-function toast(t){
-  const e=$("toast");
-  if(e) {
-    e.textContent=t;
-    e.classList.add("show");
-    setTimeout(()=>e.classList.remove("show"),2200);
-  }
-}
+    function render() {
+      const listContainer = document.getElementById("list");
+      listContainer.innerHTML = `
+        <article class="card">
+          <h3>الأهلي ضد الزمالك</h3>
+          <p>الحالة: مباشر 🔴</p>
+          <button class="cta" onclick="openStream(FIRST_MATCH_STREAM)">شاهد المباراة الآن</button>
+        </article>
+      `;
+    }
 
-$("tz").onchange=e=>{tz=e.target.value;render()};
-$("dl").onclick=e=>{e.preventDefault();toast("اربط هذا الزر برابط Google Play")};
+    function toast(t) {
+      const e = document.getElementById("toast");
+      e.textContent = t;
+      e.className = "show";
+      setTimeout(() => e.className = e.className.replace("show", ""), 2200);
+    }
 
-render();
-setInterval(tick,1000);
-</script>
+    render();
+  </script>
 </body>
 </html>
