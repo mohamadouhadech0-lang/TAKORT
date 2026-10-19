@@ -90,22 +90,16 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     const appContainer = document.getElementById('app');
     appContainer.innerHTML = '<div class="empty">جاري جلب البيانات...</div>';
 
-    // تمرير التوكن واسم المستخدم والتاريخ مباشرة في رابط الـ URL عبر البروكسي
     const targetUrl = `https://api.soccersapi.com/v2.2/livescores/?user=${encodeURIComponent(API_USER)}&token=${API_TOKEN}&t=list&d=${formattedDate}`;
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+    // استخدام بروكسي بديل ومستقر تماماً
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
     try {
       const response = await fetch(proxyUrl);
-
-      if (!response.ok) {
-        throw new Error(`خطأ في الاستجابة: ${response.status}`);
-      }
-
-      const result = await response.json();
+      if (!response.ok) throw new Error(`خطأ في الشبكة: ${response.status}`);
       
-      if (!result.success) {
-        throw new Error("رفض السيرفر الطلب، تحقق من صلاحيات المفتاح.");
-      }
+      const wrappedData = await response.json();
+      const result = JSON.parse(wrappedData.contents);
 
       allMatchesData = result.data || [];
       renderMatches();
