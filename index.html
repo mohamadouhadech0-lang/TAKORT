@@ -3,30 +3,36 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>فحص الاتصال</title>
+<title>فحص الاتصال الصحيح</title>
 <style>
 body{font-family:Tahoma,sans-serif;background:#0d1220;color:#f2f5fa;padding:20px;direction:rtl}
 pre{background:#151b2d;padding:15px;border-radius:10px;overflow-x:auto;direction:ltr;text-align:left;color:#2ad4b5}
 </style>
 </head>
 <body>
-<h2>نتائج فحص الاتصال بـ API:</h2>
+<h2>نتائج الفحص بالطريقة الصحيحة:</h2>
 <pre id="result">جاري الفحص...</pre>
 
 <script>
   const API_TOKEN = 'MyUlh-yVa4Kh4r50';
-  const API_USER = 'تاكورت';
   
   async function testApi() {
-    const targetUrl = `https://api.soccersapi.com/v2.2/livescores/?user=${encodeURIComponent(API_USER)}&token=${API_TOKEN}&t=list`;
+    // استخدام نقطة نهاية مباشرة مع تمرير التوكن في الـ Headers كما يطلب الموقع
+    const targetUrl = `https://api.soccersapi.com/v2.2/livescores/?t=list`;
     const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
     try {
-      const res = await fetch(proxyUrl);
+      const res = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${API_TOKEN}`,
+          'Accept': 'application/json'
+        }
+      });
       const text = await res.text();
       document.getElementById('result').innerText = "حالة الرد: " + res.status + "\n\nالبيانات المستلمة:\n" + text;
     } catch (err) {
-      document.getElementById('result').innerText = "حدث خطأ في الاتصال:\n" + err.message;
+      document.getElementById('result').innerText = "حدث خطأ:\n" + err.message;
     }
   }
 
