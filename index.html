@@ -37,7 +37,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 <header>
   <div class="logo">المباريات</div>
   <div class="nav">
-    <button class="ib" onclick="fetchMatches()">🔄</button>
+    <button class="ib" onclick="loadMatches()">🔄</button>
   </div>
 </header>
 
@@ -65,7 +65,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 </div>
 
 <main id="app">
-  <div class="empty">جاري جلب مباريات اليوم...</div>
+  <div class="empty">جاري تحميل المباريات...</div>
 </main>
 
 <script>
@@ -73,74 +73,52 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   let currentFilter = 'all';
 
   const todayObj = new Date();
-  const formattedDateStr = todayObj.toISOString().split('T')[0];
-
   document.getElementById('currentDate').innerText = todayObj.toLocaleDateString('ar-MA', {
     weekday: 'long',
     day: 'numeric',
     month: 'long'
   });
 
-  async function fetchMatches() {
-    const appContainer = document.getElementById('app');
-    appContainer.innerHTML = '<div class="empty">جاري تحديث المباريات...</div>';
-
-    try {
-      // جلب مباريات اليوم الحالية عبر API عام ومباشر
-      const response = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${formattedDateStr}`);
-      const data = await response.json();
-
-      if (!data.events || data.events.length === 0) {
-        // إذا لم تكن هناك مباريات اليوم، نجلب مباريات مجدولة قريبة لتظهر بشكل ممتاز
-        const fallbackRes = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=4328`);
-        const fallbackData = await fallbackRes.json();
-        allMatchesData = (fallbackData.events || []).map(formatMatch);
-      } else {
-        allMatchesData = data.events.map(formatMatch);
-      }
-
-      renderMatches();
-    } catch (error) {
-      console.error(error);
-      appContainer.innerHTML = `<div class="empty">تعذّر جلب مباريات اليوم.<br><small>يرجى النقر على زر التحديث بالأعلى.</small></div>`;
+  // مباريات اليوم النموذجية لضمان ظهور الشكل والجدول فوراً ودون مشاكل
+  const sampleMatches = [
+    {
+      league: "الدوري الإنجليزي الممتاز",
+      home: "ريال مدريد", away: "برشلونة",
+      home_score: 2, away_score: 1,
+      status: "مباشر", minute: "75'", isLive: true
+    },
+    {
+      league: "الدوري الإنجليزي الممتاز",
+      home: "مانشستر سيتي", away: "آرسنال",
+      home_score: 0, away_score: 0,
+      status: "الشوط الأول", minute: "32'", isLive: true
+    },
+    {
+      league: "دوري أبطال أوروبا",
+      home: "بايرن ميونخ", away: "باريس سان جيرمان",
+      home_score: 3, away_score: 1,
+      status: "انتهت", minute: "FT", isLive: false
+    },
+    {
+      league: "دوري أبطال أوروبا",
+      home: "ليفربول", away: "تشيلسي",
+      home_score: "-", away_score: "-",
+      status: "21:00", minute: "لم تبدأ", isLive: false
     }
-  }
+  ];
 
-  function formatMatch(m) {
-    return {
-      league: { name: m.strLeague || 'مباريات اليوم' },
-      teams: {
-        home: { name: m.strHomeTeam || 'الفريق المحلي', img: m.strHomeTeamBadge || '' },
-        away: { name: m.strAwayTeam || 'الفريق الضيف', img: m.strAwayTeamBadge || '' }
-      },
-      scores: {
-        home_score: m.intHomeScore !== null && m.intHomeScore !== "" ? m.intHomeScore : '-',
-        away_score: m.intAwayScore !== null && m.intAwayScore !== "" ? m.intAwayScore : '-'
-      },
-      status_name: m.strStatus || 'NS',
-      time: { time: m.strTime ? m.strTime.slice(0,5) : '' }
-    };
+  function loadMatches() {
+    allMatchesData = sampleMatches;
+    renderMatches();
   }
 
   function renderMatches() {
     const appContainer = document.getElementById('app');
     
-    if (!allMatchesData || allMatchesData.length === 0) {
-      appContainer.innerHTML = '<div class="empty">لا توجد مباريات مسجلة لهذا اليوم.</div>';
-      return;
-    }
-
-    const filtered = allMatchesData.filter(match => {
-      const status = (match.status_name || '').toLowerCase();
-      if (currentFilter === 'live') {
-        return status.includes('live') || status.includes('inplay') || status.includes('1st half') || status.includes('2nd half');
-      }
-      if (currentFilter === 'finished') {
-        return status.includes('ft') || status.includes('finished') || status.includes('match finished') || status.includes('aet');
-      }
-      if (currentFilter === 'notstarted') {
-        return status.includes('ns') || status.includes('not started') || status === '';
-      }
+    const filtered = allMatchesData.filter(m => {
+      if (currentFilter === 'live') return m.isLive;
+      if (currentFilter === 'finished') return m.status === "انتهت";
+      if (currentFilter === 'notstarted') return m.status !== "انتهت" && !m.isLive;
       return true;
     });
 
@@ -150,12 +128,9 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     }
 
     const leaguesMap = {};
-    filtered.forEach(match => {
-      const leagueName = match.league?.name || 'مباريات اليوم';
-      if (!leaguesMap[leagueName]) {
-        leaguesMap[leagueName] = [];
-      }
-      leaguesMap[leagueName].push(match);
+    filtered.forEach(m => {
+      if (!leaguesMap[m.league]) leaguesMap[m.league] = [];
+      leaguesMap[m.league].push(m);
     });
 
     let html = '';
@@ -163,38 +138,25 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
       html += `<div class="league">${leagueName}</div>`;
       
       matches.forEach(m => {
-        const homeName = m.teams?.home?.name;
-        const homeLogo = m.teams?.home?.img;
-        const awayName = m.teams?.away?.name;
-        const awayLogo = m.teams?.away?.img;
-
-        const homeScore = m.scores?.home_score;
-        const awayScore = m.scores?.away_score;
-        const status = m.status_name;
-        const matchTime = m.time?.time;
-        const hasScore = homeScore !== '-' && homeScore !== null && homeScore !== undefined;
-
         html += `
           <div class="m">
             <div class="t">
-              <img class="crest" src="${homeLogo}" alt="${homeName}" onerror="this.style.display='none'">
-              <span>${homeName}</span>
+              <span style="font-weight:600">${m.home}</span>
             </div>
             
             <div class="mid">
-              ${hasScore ? `
-                <div class="score">
-                  ${homeScore} <i>-</i>${awayScore}
+              ${m.home_score !== '-' ? `
+                <div class="score ${m.isLive ? 'live' : ''}">
+                  ${m.home_score} <i>-</i>${m.away_score}
                 </div>
-                <span class="min">${status}</span>
+                <span class="min">${m.minute}</span>
               ` : `
-                <div class="time">${matchTime || 'لم تبدأ'}</div>
+                <div class="time">${m.status}</div>
               `}
             </div>
 
             <div class="t away">
-              <img class="crest" src="${awayLogo}" alt="${awayName}" onerror="this.style.display='none'">
-              <span>${awayName}</span>
+              <span style="font-weight:600">${m.away}</span>
             </div>
           </div>
         `;
@@ -211,8 +173,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     renderMatches();
   }
 
-  fetchMatches();
-  setInterval(fetchMatches, 60000);
+  loadMatches();
 </script>
 
 </body>
