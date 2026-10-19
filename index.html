@@ -69,7 +69,6 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 </main>
 
 <script>
-  // التوكن واسم المستخدم من لوحة تحكمك
   const API_TOKEN = 'MyUlh-yVa4Kh4r50';
   const API_USER = 'تاكورت';
   let allMatchesData = [];
@@ -91,20 +90,15 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     const appContainer = document.getElementById('app');
     appContainer.innerHTML = '<div class="empty">جاري جلب البيانات...</div>';
 
+    // استخدام CORS Proxy لتجاوز قيود المتصفح
+    const targetUrl = `https://api.soccersapi.com/v2.2/livescores/?user=${encodeURIComponent(API_USER)}&token=${API_TOKEN}&t=list`;
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+
     try {
-      // إرسال الطلب بالصيغتين المتاحتين للمزيد من التوافق
-      const endpoint = `https://api.soccersapi.com/v2.2/matches/?user=${encodeURIComponent(API_USER)}&token=${API_TOKEN}&t=scheduled&d=${formattedDate}`;
-      
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${API_TOKEN}`,
-          'Accept': 'application/json'
-        }
-      });
+      const response = await fetch(proxyUrl);
 
       if (!response.ok) {
-        throw new Error(`خطأ في السيرفر: ${response.status}`);
+        throw new Error(`خطأ في الاستجابة: ${response.status}`);
       }
 
       const result = await response.json();
@@ -121,7 +115,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     const appContainer = document.getElementById('app');
     
     if (!allMatchesData || allMatchesData.length === 0) {
-      appContainer.innerHTML = '<div class="empty">لا توجد مباريات مسجلة لهذا اليوم.</div>';
+      appContainer.innerHTML = '<div class="empty">لا توجد مباريات مسجلة حالياً.</div>';
       return;
     }
 
