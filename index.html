@@ -28,7 +28,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .score i{color:var(--mut);font-style:normal;margin:0 6px}
 .score.live{color:var(--acc)}
 .min{display:block;text-align:center;font-size:12px;color:var(--acc);margin-top:2px}
-.empty{text-align:center;color:var(--mut);padding:40px 16px}
+.empty{text-align:center;color:var(--mut);padding:40px 16px;font-size:15px;line-height:1.6}
 .ad-container{text-align:center;margin:10px auto;display:flex;justify-content:center}
 </style>
 </head>
@@ -65,7 +65,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 </div>
 
 <main id="app">
-  <div class="empty">جاري تحميل المباريات...</div>
+  <div class="empty">جاري الاتصال بالسيرفر...</div>
 </main>
 
 <script>
@@ -88,24 +88,31 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 
   async function fetchMatches() {
     const appContainer = document.getElementById('app');
-    appContainer.innerHTML = '<div class="empty">جاري جلب البيانات...</div>';
+    appContainer.innerHTML = '<div class="empty">جاري جلب البيانات وتحليلها...</div>';
 
     const targetUrl = `https://api.soccersapi.com/v2.2/livescores/?user=${encodeURIComponent(API_USER)}&token=${API_TOKEN}&t=list&d=${formattedDate}`;
-    // استخدام بروكسي بديل ومستقر تماماً
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
     try {
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error(`خطأ في الشبكة: ${response.status}`);
+      if (!response.ok) throw new Error(`خطأ في خادم الوسيط: ${response.status}`);
       
       const wrappedData = await response.json();
+      if (!wrappedData.contents) {
+        throw new Error("لم يتم استلام محتوى من الخادم الوسيط.");
+      }
+
       const result = JSON.parse(wrappedData.contents);
+      
+      if (result.success === false) {
+        throw new Error(`رفض الـ API الطلب. (الكود: ${result.status || 'غير معروف'})`);
+      }
 
       allMatchesData = result.data || [];
       renderMatches();
     } catch (error) {
       console.error(error);
-      appContainer.innerHTML = `<div class="empty">تعذّر جلب البيانات حالياً.<br><small>${error.message}</small></div>`;
+      appContainer.innerHTML = `<div class="empty" style="color:#ff6b6b;">تعذّر جلب البيانات.<br><small style="color:inherit;">${error.message}</small></div>`;
     }
   }
 
